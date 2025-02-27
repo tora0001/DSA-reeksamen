@@ -88,7 +88,7 @@ function drawTree(data) {
   const treeLayout = d3.tree().size([width, height - 160]);
   treeLayout(root);
 
-  // Links between nodes
+  // Links between the nodes
   const link = svg.selectAll(".link").data(root.links(), (d) => `${d.source.data.name}-${d.target.data.name}`);
 
   link

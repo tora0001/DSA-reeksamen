@@ -20,11 +20,8 @@ class BalancedRBTree {
     this.rootNode = null;
   }
 
+  // Adds a new value to the tree, inserting it at the appropriate position and rebalancing to maintain red-black properties
   addValue(data) {
-    // Helper function for recursive insertion
-    // If no root exists, new node becomes root and is colored black
-    // Otherwise, insert node as a child of an existing node at the appropriate position
-    // After insertion, balanceAfterAdd is called to maintain red-black properties
     const addRecursively = (node) => {
       const currentNode = node;
       // If value is less than current node's value, go left
@@ -71,7 +68,7 @@ class BalancedRBTree {
     }
   }
 
-  // Balance function to ensure red-black properties after insertion
+  // Restores red-black tree properties after insertion by performing rotations and color changes as needed
   _balanceAfterAdd(node) {
     let currentNode = node;
     // Continue while parent is red and not null. Stop at root or when parent is no longer red
@@ -129,7 +126,7 @@ class BalancedRBTree {
     }
   }
 
-  // Removes a value from the tree, handling cases where the deleted node has one or two children
+  // Removes a specified value from the tree and rebalances to maintain red-black properties
   removeValue(data, node = this.rootNode) {
     console.log(`Attempting to delete value ${data}`);
 
@@ -188,7 +185,7 @@ class BalancedRBTree {
     return this.rootNode;
   }
 
-  // Balance function to maintain red-black properties after deletion
+  // Restores red-black tree properties after deletion by performing rotations and color changes as needed
   _balanceAfterRemove(node) {
     let currentNode = node;
 
@@ -279,7 +276,7 @@ class BalancedRBTree {
     console.log(`Finishing balancing with currentNode: ${currentNode.data}`);
   }
 
-  // Search function to find a value in the tree
+  // Searches for and returns the node containing the specified value, or false if not found
   findNode(data, node = this.rootNode) {
     // If node doesn't exist, return false
     if (!node) return false;
@@ -291,8 +288,7 @@ class BalancedRBTree {
     return this.findNode(data, node.rightChild);
   }
 
-  // Helper function to replace a node with another
-  // Used during deletion
+  // Replaces a node with a new node in the tree structure, updating parent references accordingly
   _substituteParent(currentNode, newNode) {
     console.log(`Replacing parent of node ${currentNode.data} with node ${newNode ? newNode.data : null}.`);
     const { ancestor } = currentNode;
@@ -305,7 +301,7 @@ class BalancedRBTree {
     }
   }
 
-  // Performs rotations to maintain red-black properties
+  // Performs a left rotation around a node to maintain tree balance
   _rotateLeft(node) {
     console.log(`Left rotation on node ${node.data}.`);
     const pivotNode = node.rightChild;
@@ -322,6 +318,7 @@ class BalancedRBTree {
     }
   }
 
+  // Performs a right rotation around a node to maintain tree balance
   _rotateRight(node) {
     console.log(`Rotating right on node ${node.data}.`);
     const pivotNode = node.leftChild;
@@ -337,7 +334,7 @@ class BalancedRBTree {
     }
   }
 
-  // Helper function to flip colors on a node and its children
+  // Flips the colors of a node and its children to maintain red-black properties
   _invertColors(node) {
     console.log(`Flipping color of node ${node.data} to red and its children to black.`);
     node.shade = TreeColor.RED;
@@ -346,13 +343,12 @@ class BalancedRBTree {
     node.rightChild.shade = TreeColor.BLACK;
   }
 
-  // Helper function to check if a node is red
+  // Checks if a node has the red color property, handling null nodes gracefully
   _isNodeRed(node) {
     return node ? node.shade === TreeColor.RED : false;
   }
 
-  // Finds minimum value in a subtree
-  // Used in delete operation
+  // Finds the node with the minimum value in a subtree, used during delete operations
   findMinNode(node = this.rootNode) {
     let currentNode = node;
     while (currentNode && currentNode.leftChild) {

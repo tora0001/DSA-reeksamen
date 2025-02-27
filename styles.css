@@ -15,7 +15,7 @@ h1 {
   align-items: center;
   margin-top: 10px;
   width: 100%;
-  height: 500px; /* Adjust as necessary for your layout */
+  height: 500px;
 }
 
 .node {
@@ -37,7 +37,6 @@ h1 {
   stroke-width: 2px;
 }
 
-/* Button Styles */
 button.insert-node {
   background-color: green;
   border: none;
@@ -72,7 +71,6 @@ button:hover {
   filter: brightness(0.8);
 }
 
-/* Input Styles */
 input[type="number"] {
   padding: 8px;
   border: 1px solid #bdc3c7;
@@ -83,7 +81,6 @@ input[type="number"] {
   color: #333;
 }
 
-/* Message Styles */
 #message {
   max-height: 300px;
   max-width: 500px;
