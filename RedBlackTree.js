@@ -1,365 +1,365 @@
-// enums for node farve
-const NodeColor = {
+// Color constants for tree nodes
+const TreeColor = {
   RED: "RED",
   BLACK: "BLACK",
 };
 
-// Klasse for at repræsentere en rød-sort knude
-class RBTNode {
-  constructor(value, parent = null) {
-    this.value = value;
-    this.left = null;
-    this.right = null;
-    this.parent = parent;
-    this.color = NodeColor.RED; // Nye noder er altid røde
+// Class representing a node in the red-black tree structure
+class RBNode {
+  constructor(data, ancestor = null) {
+    this.data = data;
+    this.leftChild = null;
+    this.rightChild = null;
+    this.ancestor = ancestor;
+    this.shade = TreeColor.RED; // New nodes are always red initially
   }
 }
 
-class RedBlackTree {
+class BalancedRBTree {
   constructor() {
-    this.root = null;
+    this.rootNode = null;
   }
 
-  insert(value) {
-    // Hælperfunktion til rekursiv indsættelse
-    // Hvis der ikk er nogen rod, indsættes den nye knude som rod og laves sort
-    // Ellers indsættes knuden som et barn til en eksisterende knude det rigtige sted
-    // Efter kaldes insertFixup for at sikre at træet overholder rød-sort egenskaberne
-    const insertHelper = (node) => {
-      const currNode = node;
-      // Hvis værdien er mindre end værdien af current node, gå til venstre
-      if (value < currNode.value) {
-        // Hvis current node har en venstre knude, gå til venstre
-        if (currNode.left) {
-          console.log(`Traversing left from node ${currNode.value}`);
-          // Rekursivt kald til venstre barn, kør igen med venstre barn som ny current node
-          insertHelper(currNode.left);
-          // Hvis current node ikke har en venstre knude, indsæt den nye knude som venstre barn
+  addValue(data) {
+    // Helper function for recursive insertion
+    // If no root exists, new node becomes root and is colored black
+    // Otherwise, insert node as a child of an existing node at the appropriate position
+    // After insertion, balanceAfterAdd is called to maintain red-black properties
+    const addRecursively = (node) => {
+      const currentNode = node;
+      // If value is less than current node's value, go left
+      if (data < currentNode.data) {
+        // If current node has a left child, continue traversing left
+        if (currentNode.leftChild) {
+          console.log(`Traversing left from node ${currentNode.data}`);
+          // Recursive call with left child as new current node
+          addRecursively(currentNode.leftChild);
         } else {
-          console.log(`Inserting ${value} as the left child of ${currNode.value}`);
-          currNode.left = new RBTNode(value);
-          currNode.left.parent = currNode;
-          this._insertFixup(currNode.left);
+          // If current node has no left child, insert new node as left child
+          console.log(`Inserting ${data} as the left child of ${currentNode.data}`);
+          currentNode.leftChild = new RBNode(data);
+          currentNode.leftChild.ancestor = currentNode;
+          this._balanceAfterAdd(currentNode.leftChild);
         }
       }
-      // Hvis værdien er større end værdien af current node, gå til højre
-      else if (value > currNode.value) {
-        if (currNode.right) {
-          console.log(`Traversing right from node ${currNode.value}`);
-          insertHelper(currNode.right);
+      // If value is greater than current node's value, go right
+      else if (data > currentNode.data) {
+        if (currentNode.rightChild) {
+          console.log(`Traversing right from node ${currentNode.data}`);
+          addRecursively(currentNode.rightChild);
         } else {
-          console.log(`Inserting ${value} as the right child of ${currNode.value}`);
-          currNode.right = new RBTNode(value);
-          currNode.right.parent = currNode;
-          this._insertFixup(currNode.right);
+          console.log(`Inserting ${data} as the right child of ${currentNode.data}`);
+          currentNode.rightChild = new RBNode(data);
+          currentNode.rightChild.ancestor = currentNode;
+          this._balanceAfterAdd(currentNode.rightChild);
         }
-        // Håndtering af duplikater
       } else {
-        console.log(`Value ${value} already exists in the tree. No duplicates allowed.`);
+        // Handle duplicates
+        console.log(`Value ${data} already exists in the tree. No duplicates allowed.`);
       }
     };
-    // Hvis der ikke er nogen rod, indsættes den nye knude som rod og laves sort
-    if (!this.root) {
-      console.log(`Inserting ${value} as the root node.`);
-      this.root = new RBTNode(value);
-      this.root.color = NodeColor.BLACK; // Sørge for at roden altid er sort
+
+    // If tree is empty, insert as root node and color black
+    if (!this.rootNode) {
+      console.log(`Inserting ${data} as the root node.`);
+      this.rootNode = new RBNode(data);
+      this.rootNode.shade = TreeColor.BLACK; // Root must always be black
     } else {
-      // Hvis der er en rod, kald hjælpefunktionen til at indsætte den nye knude
-      console.log(`Starting insertion of ${value}`);
-      insertHelper(this.root);
+      // If root exists, call helper function to insert new node
+      console.log(`Starting insertion of ${data}`);
+      addRecursively(this.rootNode);
     }
   }
 
-  // Fixup funktion for at sikre at rød-sort egenskaberne overholdes efter en indsættelse
-  _insertFixup(node) {
-    let currNode = node;
-    // Mens forældre til current node er rød og ikke null. Sikre at vi stopper når vi når roden eller når faren ikke længere er rød
-    while (this._isRed(currNode.parent) && currNode.parent.parent) {
-      const { parent } = currNode;
-      const grandparent = parent.parent;
+  // Balance function to ensure red-black properties after insertion
+  _balanceAfterAdd(node) {
+    let currentNode = node;
+    // Continue while parent is red and not null. Stop at root or when parent is no longer red
+    while (this._isNodeRed(currentNode.ancestor) && currentNode.ancestor.ancestor) {
+      const { ancestor } = currentNode;
+      const grandAncestor = ancestor.ancestor;
 
-      console.log(`Fixing up at node ${currNode.value}, parent ${parent.value}, grandparent ${grandparent.value}`);
+      console.log(`Balancing at node ${currentNode.data}, parent ${ancestor.data}, grandparent ${grandAncestor.data}`);
 
-      // Hvis forældrenode er venstre barn af bedsteforældrenode
-      if (parent === grandparent.left) {
-        const uncle = grandparent.right;
-        // Hvis onkel er rød, flip farverne op bedsteforældrene
-        if (this._isRed(uncle)) {
-          console.log(`Uncle ${uncle.value} is red. Flipping colors of grandparent ${grandparent.value}.`);
-          this._flipColor(grandparent);
+      // If parent node is left child of grandparent
+      if (ancestor === grandAncestor.leftChild) {
+        const uncleNode = grandAncestor.rightChild;
+        // If uncle is red, flip colors up to grandparent
+        if (this._isNodeRed(uncleNode)) {
+          console.log(`Uncle ${uncleNode.data} is red. Flipping colors of grandparent ${grandAncestor.data}.`);
+          this._invertColors(grandAncestor);
         } else {
-          // Hvis current node er højre barn af forældrenode, roter til venstre om forældrenode
-          if (currNode === parent.right) {
-            console.log(`Current node ${currNode.value} is right child of its parent ${parent.value}. Performing left rotation on parent.`);
-            this._leftRotation(parent);
-            currNode = parent;
+          // If current node is right child of parent, rotate left around parent
+          if (currentNode === ancestor.rightChild) {
+            console.log(`Current node ${currentNode.data} is right child of its parent ${ancestor.data}. Performing left rotation on parent.`);
+            this._rotateLeft(ancestor);
+            currentNode = ancestor;
           }
-          // Roter til højre om bedsteforældrene
-          console.log(`Performing right rotation on grandparent ${grandparent.value}.`);
-          this._rightRotation(grandparent);
+          // Rotate right around grandparent
+          console.log(`Performing right rotation on grandparent ${grandAncestor.data}.`);
+          this._rotateRight(grandAncestor);
         }
       } else {
-        // Hvis forældrenode er højre barn af bedsteforældrene
-        const uncle = grandparent.left;
-        // Hvis onkel er rød, flip farven
-        if (this._isRed(uncle)) {
-          console.log(`Uncle ${uncle.value} is red. Flipping colors of grandparent ${grandparent.value}.`);
-          this._flipColor(grandparent);
-          currNode = grandparent;
+        // If parent node is right child of grandparent
+        const uncleNode = grandAncestor.leftChild;
+        // If uncle is red, flip color
+        if (this._isNodeRed(uncleNode)) {
+          console.log(`Uncle ${uncleNode.data} is red. Flipping colors of grandparent ${grandAncestor.data}.`);
+          this._invertColors(grandAncestor);
+          currentNode = grandAncestor;
         } else {
-          // Hvis current node er venstre barn af forældrenode, roter til højre om forældrenode
-          if (currNode === parent.left) {
-            console.log(`Current node ${currNode.value} is left child of its parent ${parent.value}. Performing right rotation on parent.`);
-            this._rightRotation(parent);
-            currNode = parent;
+          // If current node is left child of parent, rotate right around parent
+          if (currentNode === ancestor.leftChild) {
+            console.log(`Current node ${currentNode.data} is left child of its parent ${ancestor.data}. Performing right rotation on parent.`);
+            this._rotateRight(ancestor);
+            currentNode = ancestor;
           }
-          // Roter til venstre om bedsteforældrene
-          console.log(`Performing left rotation on grandparent ${grandparent.value}.`);
-          this._leftRotation(grandparent);
+          // Rotate left around grandparent
+          console.log(`Performing left rotation on grandparent ${grandAncestor.data}.`);
+          this._rotateLeft(grandAncestor);
         }
       }
-      // Opdater current node til bedsteforældrene, for at forsætte op i træet og fikse ydeligere problemer
-      currNode = grandparent;
+      // Update current node to grandparent to continue up the tree and fix additional issues
+      currentNode = grandAncestor;
     }
-    // Til sidst Sørg for, at roden altid er sort
-    if (this.root.color !== NodeColor.BLACK) {
+    // Finally ensure root is always black
+    if (this.rootNode.shade !== TreeColor.BLACK) {
       console.log(`Setting root color to black.`);
-      this.root.color = NodeColor.BLACK;
+      this.rootNode.shade = TreeColor.BLACK;
     }
   }
 
-  // Denne funktion sletter en værdi fra træet. Den håndterer tilfælde,
-  // hvor den slettede knude er en node, der har et enkelt barn, eller har to børn.
-  delete(value, node = this.root) {
-    console.log(`Attempting to delete value ${value}`);
+  // Removes a value from the tree, handling cases where the deleted node has one or two children
+  removeValue(data, node = this.rootNode) {
+    console.log(`Attempting to delete value ${data}`);
 
-    // Søg efter den node, der skal slettes
-    const targetNode = this.search(value, node);
+    // Search for the node to delete
+    const targetNode = this.findNode(data, node);
 
-    // Hvis værdien ikke findes i træet, returner false
+    // If value doesn't exist in tree, return false
     if (!targetNode) {
-      console.log(`Value ${value} not found in the tree.`);
+      console.log(`Value ${data} not found in the tree.`);
       return false;
     }
 
-    console.log(`Found node with value ${value}`);
+    console.log(`Found node with value ${data}`);
 
-    // Hvis targetNode er en leafnode (ingen børn)
-    if (!targetNode.left && !targetNode.right) {
-      console.log(`Node ${value} is a leaf node.`);
-      // Hvis noden er rød, kan den slettes uden at bryde rød-sort egenskaberne
-      if (this._isRed(targetNode)) {
-        console.log(`Node ${value} is red, simply removing it.`);
-        this._replaceParent(targetNode, null);
+    // If targetNode is a leaf (no children)
+    if (!targetNode.leftChild && !targetNode.rightChild) {
+      console.log(`Node ${data} is a leaf node.`);
+      // If node is red, it can be removed without breaking red-black properties
+      if (this._isNodeRed(targetNode)) {
+        console.log(`Node ${data} is red, simply removing it.`);
+        this._substituteParent(targetNode, null);
       } else {
-        // Hvis noden er sort, skal der udføres en fixup for at sikre at rød-sort egenskaberne overholdes
-        console.log(`Node ${value} is black, needs fixup after removal.`);
-        this._deleteFixup(targetNode);
-        this._replaceParent(targetNode, null);
+        // If node is black, perform balancing to maintain red-black properties
+        console.log(`Node ${data} is black, needs balancing after removal.`);
+        this._balanceAfterRemove(targetNode);
+        this._substituteParent(targetNode, null);
       }
-      // Hvis targetNode kun har et barn
-    } else if (!targetNode.left || !targetNode.right) {
-      if (targetNode.left) {
-        console.log(`Node ${value} has only left child.`);
-        // Erstat targetNode med dens venstre barn og sæt farven til sort
-        targetNode.left.color = NodeColor.BLACK;
-        targetNode.left.parent = targetNode.parent;
-        this._replaceParent(targetNode, targetNode.left);
+    } else if (!targetNode.leftChild || !targetNode.rightChild) {
+      // If targetNode has only one child
+      if (targetNode.leftChild) {
+        console.log(`Node ${data} has only left child.`);
+        // Replace targetNode with its left child and color it black
+        targetNode.leftChild.shade = TreeColor.BLACK;
+        targetNode.leftChild.ancestor = targetNode.ancestor;
+        this._substituteParent(targetNode, targetNode.leftChild);
       } else {
-        console.log(`Node ${value} has only right child.`);
-        // Erstat targetNode med dens højre barn og sæt farven til sort
-        targetNode.right.color = NodeColor.BLACK;
-        targetNode.right.parent = targetNode.parent;
-        this._replaceParent(targetNode, targetNode.right);
+        console.log(`Node ${data} has only right child.`);
+        // Replace targetNode with its right child and color it black
+        targetNode.rightChild.shade = TreeColor.BLACK;
+        targetNode.rightChild.ancestor = targetNode.ancestor;
+        this._substituteParent(targetNode, targetNode.rightChild);
       }
-      // Hvis targetNode har to børn
     } else {
-      console.log(`Node ${value} has two children, finding in-order successor.`);
-      // Find in-order successor (mindste værdi i højre subtræ)
-      const aux = this.findMin(targetNode.right);
-      console.log(`In-order successor is ${aux.value}`);
-      // erstat værdien af targetNode med værdien af in-order successor
-      targetNode.value = aux.value;
-      // Slet in-order successor fra højre subtræ, kalder rekursivt delete for at sikre at hvis den har børn, bliver de håndteret korrekt
-      this.delete(aux.value, targetNode.right);
+      // If targetNode has two children
+      console.log(`Node ${data} has two children, finding in-order successor.`);
+      // Find in-order successor (smallest value in right subtree)
+      const successor = this.findMinNode(targetNode.rightChild);
+      console.log(`In-order successor is ${successor.data}`);
+      // Replace targetNode's value with successor's value
+      targetNode.data = successor.data;
+      // Delete successor from right subtree
+      this.removeValue(successor.data, targetNode.rightChild);
     }
 
-    console.log(`Deletion of value ${value} completed.`);
-    return this.root;
+    console.log(`Deletion of value ${data} completed.`);
+    return this.rootNode;
   }
 
-  // Fixup funktion for at sikre at rød-sort egenskaberne overholdes efter en sletning
-  _deleteFixup(node) {
-    let currNode = node;
-
-    // Loop indtil currNode er roden eller currNode er sort
-    while (currNode !== this.root && !this._isRed(currNode)) {
-      const { parent } = currNode;
-      // Lav en variabel til at holde siblings til currNode
-      // Husk tomme noder er sorte
-      let sibling;
-
-      // Tjek om currNode er venstre barn af sin forældre
-      if (currNode === parent.left) {
-        // Så er søskende højre barn af forældrenode
-        sibling = parent.right;
-
-        // Hvis sibling er rød, roter til venstre om forældrenode
-        if (this._isRed(sibling)) {
-          console.log(`Left rotation at parent ${parent.value} because sibling ${sibling.value} is red.`);
-          this._leftRotation(parent);
-        }
-
-        // Hvis begge siblings er sort
-        else if (!this._isRed(sibling.left) && !this._isRed(sibling.right)) {
-          // Hvis forældrenode er rød, sæt forældrenode til sort og siblings til rød
-          if (this._isRed(parent)) {
-            console.log(`Parent ${parent.value} is red, setting parent to black and sibling ${sibling.value} to red.`);
-            parent.color = NodeColor.BLACK;
-            sibling.color = NodeColor.RED;
-            break;
-          }
-          // Hvis forældrenode og siblings er sorte, sæt siblings til rød og fortsæt op i træet
-          console.log(`Sibling ${sibling.value} and parent ${parent.value} are black, moving up the tree.`);
-          sibling.color = NodeColor.RED;
-          currNode = parent;
-        }
-
-        // Hvis sibling til venstre er rød og sibling til højre er sort
-        else if (this._isRed(sibling.left) && !this._isRed(sibling.right)) {
-          // Roter til højre om sibling
-          console.log(`Right rotation at sibling ${sibling.value} because left child is red.`);
-          this._rightRotation(sibling);
-        } else {
-          // Roter til venstre om forældrenode, sæt forældrenode til sort og siblings højre barn til sort
-          console.log(`Left rotation at parent ${parent.value}, setting parent to black and sibling's right child to black.`);
-          this._leftRotation(parent);
-          parent.color = NodeColor.BLACK;
-          sibling.right.color = NodeColor.BLACK;
-          break;
-        }
-      } else {
-        // Hvis currNode er højre barn af sin forældre
-        // sæt sibling til venstre barn af forældrenode
-        sibling = parent.left;
-        // Hvis sibling er rød, roter til højre om forældrenode
-        if (this._isRed(sibling)) {
-          console.log(`Right rotation at parent ${parent.value} because sibling ${sibling.value} is red.`);
-          this._rightRotation(parent);
-        }
-        // Hvis begge siblings er sorte
-        else if (!this._isRed(sibling.left) && !this._isRed(sibling.right)) {
-          // Hvis forældrenode er rød, sæt forældrenode til sort og siblings til rød
-          if (this._isRed(parent)) {
-            console.log(`Parent ${parent.value} is red, setting parent to black and sibling ${sibling.value} to red.`);
-            parent.color = NodeColor.BLACK;
-            sibling.color = NodeColor.RED;
-            break;
-          }
-          // Hvis forældrenode og siblings er sorte, sæt siblings til rød og fortsæt op i træet
-          console.log(`Sibling ${sibling.value} and parent ${parent.value} are black, moving up the tree.`);
-          sibling.color = NodeColor.RED;
-          currNode = parent;
-        }
-        // Hvis sibling til venstre er rød og sibling til højre er sort
-        else if (this._isRed(sibling.right) && !this._isRed(sibling.left)) {
-          // Roter til venstre om sibling
-          console.log(`Left rotation at sibling ${sibling.value} because right child is red.`);
-          this._leftRotation(sibling);
-        } else {
-          // Roter til højre om forældrenode, sæt forældrenode til sort og siblings venstre barn til sort
-          console.log(`Right rotation at parent ${parent.value}, setting parent to black and sibling's left child to black.`);
-          this._rightRotation(parent);
-          parent.color = NodeColor.BLACK;
-          sibling.left.color = NodeColor.BLACK;
-          break;
-        }
-      }
-    }
-    console.log(`Finishing _deleteFixup with currNode: ${currNode.value}`);
-  }
-
-  // Søgefunktion for at finde en værdi i træet
-  search(value, node = this.root) {
-    // Hvis noden ikke findes, returner false
-    if (!node) return false;
-    // Hvis værdien findes, returner noden
-    if (value === node.value) return node;
-    // Hvis værdien er mindre end nodens værdi, søg til venstre
-    if (value < node.value) return this.search(value, node.left);
-    // Hvis værdien er større end nodens værdi, søg til højre
-    return this.search(value, node.right);
-  }
-
-  // Hjælpefunktion til at erstatte en knude med en anden
-  // Bliver brugt i sletning
-  _replaceParent(currNode, newNode) {
-    console.log(`Replacing parent of node ${currNode.value} with node ${newNode ? newNode.value : null}.`);
-    const { parent } = currNode;
-    if (!parent) {
-      this.root = newNode;
-    } else if (currNode === parent.left) {
-      parent.left = newNode;
-    } else {
-      parent.right = newNode;
-    }
-  }
-
-  // Udfører rotationer for at opretholde rød-sort egenskaberne
-  _leftRotation(node) {
-    console.log(`Left rotation on node ${node.value}.`);
-    const currNode = node.right;
-    node.right = currNode.left;
-    currNode.left = node;
-    currNode.color = node.color;
-    node.color = NodeColor.RED;
-    // Erstat forældrenoden med currNode
-    this._replaceParent(node, currNode);
-    currNode.parent = node.parent;
-    node.parent = currNode;
-    if (node.right) {
-      node.right.parent = node;
-    }
-  }
-
-  _rightRotation(node) {
-    console.log(`Rotating right on node ${node.value}.`);
-    const currNode = node.left;
-    node.left = currNode.right;
-    currNode.right = node;
-    currNode.color = node.color;
-    node.color = NodeColor.RED;
-    this._replaceParent(node, currNode);
-    currNode.parent = node.parent;
-    node.parent = currNode;
-    if (node.left) {
-      node.left.parent = node;
-    }
-  }
-
-  // Hjælpefunktion til at flippe farver på en node og dens børn
-  _flipColor(node) {
-    console.log(`Flipping color of node ${node.value} to red and its children to black.`);
-    node.color = NodeColor.RED;
-    // Making the children black
-    node.left.color = NodeColor.BLACK;
-    node.right.color = NodeColor.BLACK;
-  }
-
-  // Hjælpefunktion til at tjekke om en node er rød
-  _isRed(node) {
-    return node ? node.color === NodeColor.RED : false;
-  }
-
-  // Finder minimumsværdien i et subtræ
-  // bliver brugt i delete
-  findMin(node = this.root) {
+  // Balance function to maintain red-black properties after deletion
+  _balanceAfterRemove(node) {
     let currentNode = node;
-    while (currentNode && currentNode.left) {
-      currentNode = currentNode.left;
+
+    // Loop until currentNode is root or currentNode is red
+    while (currentNode !== this.rootNode && !this._isNodeRed(currentNode)) {
+      const { ancestor } = currentNode;
+      let siblingNode;
+
+      // Check if currentNode is left child of its parent
+      if (currentNode === ancestor.leftChild) {
+        // Sibling is right child of parent
+        siblingNode = ancestor.rightChild;
+
+        // If sibling is red, rotate left around parent
+        if (this._isNodeRed(siblingNode)) {
+          console.log(`Left rotation at parent ${ancestor.data} because sibling ${siblingNode.data} is red.`);
+          this._rotateLeft(ancestor);
+        }
+
+        // If both children of sibling are black
+        else if (!this._isNodeRed(siblingNode.leftChild) && !this._isNodeRed(siblingNode.rightChild)) {
+          // If parent is red, set parent to black and sibling to red
+          if (this._isNodeRed(ancestor)) {
+            console.log(`Parent ${ancestor.data} is red, setting parent to black and sibling ${siblingNode.data} to red.`);
+            ancestor.shade = TreeColor.BLACK;
+            siblingNode.shade = TreeColor.RED;
+            break;
+          }
+          // If parent and siblings are black, set sibling to red and continue up the tree
+          console.log(`Sibling ${siblingNode.data} and parent ${ancestor.data} are black, moving up the tree.`);
+          siblingNode.shade = TreeColor.RED;
+          currentNode = ancestor;
+        }
+
+        // If sibling's left child is red and right child is black
+        else if (this._isNodeRed(siblingNode.leftChild) && !this._isNodeRed(siblingNode.rightChild)) {
+          // Rotate right around sibling
+          console.log(`Right rotation at sibling ${siblingNode.data} because left child is red.`);
+          this._rotateRight(siblingNode);
+        } else {
+          // Rotate left around parent, set parent to black and sibling's right child to black
+          console.log(`Left rotation at parent ${ancestor.data}, setting parent to black and sibling's right child to black.`);
+          this._rotateLeft(ancestor);
+          ancestor.shade = TreeColor.BLACK;
+          siblingNode.rightChild.shade = TreeColor.BLACK;
+          break;
+        }
+      } else {
+        // If currentNode is right child of its parent
+        siblingNode = ancestor.leftChild;
+
+        // If sibling is red, rotate right around parent
+        if (this._isNodeRed(siblingNode)) {
+          console.log(`Right rotation at parent ${ancestor.data} because sibling ${siblingNode.data} is red.`);
+          this._rotateRight(ancestor);
+        }
+
+        // If both siblings are black
+        else if (!this._isNodeRed(siblingNode.leftChild) && !this._isNodeRed(siblingNode.rightChild)) {
+          // If parent is red, set parent to black and sibling to red
+          if (this._isNodeRed(ancestor)) {
+            console.log(`Parent ${ancestor.data} is red, setting parent to black and sibling ${siblingNode.data} to red.`);
+            ancestor.shade = TreeColor.BLACK;
+            siblingNode.shade = TreeColor.RED;
+            break;
+          }
+          // If parent and siblings are black, set sibling to red and continue up the tree
+          console.log(`Sibling ${siblingNode.data} and parent ${ancestor.data} are black, moving up the tree.`);
+          siblingNode.shade = TreeColor.RED;
+          currentNode = ancestor;
+        }
+
+        // If sibling's right child is red and left child is black
+        else if (this._isNodeRed(siblingNode.rightChild) && !this._isNodeRed(siblingNode.leftChild)) {
+          // Rotate left around sibling
+          console.log(`Left rotation at sibling ${siblingNode.data} because right child is red.`);
+          this._rotateLeft(siblingNode);
+        } else {
+          // Rotate right around parent, set parent to black and sibling's left child to black
+          console.log(`Right rotation at parent ${ancestor.data}, setting parent to black and sibling's left child to black.`);
+          this._rotateRight(ancestor);
+          ancestor.shade = TreeColor.BLACK;
+          siblingNode.leftChild.shade = TreeColor.BLACK;
+          break;
+        }
+      }
+    }
+    console.log(`Finishing balancing with currentNode: ${currentNode.data}`);
+  }
+
+  // Search function to find a value in the tree
+  findNode(data, node = this.rootNode) {
+    // If node doesn't exist, return false
+    if (!node) return false;
+    // If value found, return the node
+    if (data === node.data) return node;
+    // If value is less than node's value, search left
+    if (data < node.data) return this.findNode(data, node.leftChild);
+    // If value is greater than node's value, search right
+    return this.findNode(data, node.rightChild);
+  }
+
+  // Helper function to replace a node with another
+  // Used during deletion
+  _substituteParent(currentNode, newNode) {
+    console.log(`Replacing parent of node ${currentNode.data} with node ${newNode ? newNode.data : null}.`);
+    const { ancestor } = currentNode;
+    if (!ancestor) {
+      this.rootNode = newNode;
+    } else if (currentNode === ancestor.leftChild) {
+      ancestor.leftChild = newNode;
+    } else {
+      ancestor.rightChild = newNode;
+    }
+  }
+
+  // Performs rotations to maintain red-black properties
+  _rotateLeft(node) {
+    console.log(`Left rotation on node ${node.data}.`);
+    const pivotNode = node.rightChild;
+    node.rightChild = pivotNode.leftChild;
+    pivotNode.leftChild = node;
+    pivotNode.shade = node.shade;
+    node.shade = TreeColor.RED;
+    // Replace parent node with pivotNode
+    this._substituteParent(node, pivotNode);
+    pivotNode.ancestor = node.ancestor;
+    node.ancestor = pivotNode;
+    if (node.rightChild) {
+      node.rightChild.ancestor = node;
+    }
+  }
+
+  _rotateRight(node) {
+    console.log(`Rotating right on node ${node.data}.`);
+    const pivotNode = node.leftChild;
+    node.leftChild = pivotNode.rightChild;
+    pivotNode.rightChild = node;
+    pivotNode.shade = node.shade;
+    node.shade = TreeColor.RED;
+    this._substituteParent(node, pivotNode);
+    pivotNode.ancestor = node.ancestor;
+    node.ancestor = pivotNode;
+    if (node.leftChild) {
+      node.leftChild.ancestor = node;
+    }
+  }
+
+  // Helper function to flip colors on a node and its children
+  _invertColors(node) {
+    console.log(`Flipping color of node ${node.data} to red and its children to black.`);
+    node.shade = TreeColor.RED;
+    // Making the children black
+    node.leftChild.shade = TreeColor.BLACK;
+    node.rightChild.shade = TreeColor.BLACK;
+  }
+
+  // Helper function to check if a node is red
+  _isNodeRed(node) {
+    return node ? node.shade === TreeColor.RED : false;
+  }
+
+  // Finds minimum value in a subtree
+  // Used in delete operation
+  findMinNode(node = this.rootNode) {
+    let currentNode = node;
+    while (currentNode && currentNode.leftChild) {
+      currentNode = currentNode.leftChild;
     }
     return currentNode;
   }
 }
 
-export default RedBlackTree;
+export default BalancedRBTree;
