@@ -1,4 +1,4 @@
-import BalancedRBTree from "/RedBlackTree.js";
+import BalancedRBTree from "./RedBlackTree.js";
 
 // Create instance of BalancedRBTree
 const rbTree = new BalancedRBTree();
